@@ -19,8 +19,9 @@ namespace EReader
 {
     public partial class Form1 : Form
     {
-        EpubBook book;
-        int currentNavigationPage = 0;
+        private EpubBook book;
+        private int currentNavigationPage = 0;
+        private string currentId = null;
         private string GetFile()
         {
             string filePath = "";
@@ -106,11 +107,14 @@ namespace EReader
             return navPath;
         }
 
-        private string GetPagePath(int numInList)
+        private List<string> GetPagePath(int numInList)
         {
             EpubTextContentFile contentFile = book.ReadingOrder[numInList];
+            List<string> navPath = new List<string>();
             string docPath = ExtractionPath(book) + "\\" + contentFile.FilePathInEpubArchive;
-            return docPath;
+            navPath.Add(docPath);
+            navPath.Add(contentFile.FileName);
+            return navPath;
         }
 
         private List<EpubNavigationItem> GetPlainNavigation(List<EpubNavigationItem> bookItems)
@@ -152,7 +156,18 @@ namespace EReader
             }
         }
 
-
+        private void SetCurrentNavigationPage(EpubBook book, string fileName)
+        {
+            
+            for (int i = 0; i < book.ReadingOrder.Count; i++)
+            {
+                if (book.ReadingOrder[i].FileName == fileName)
+                {
+                    currentNavigationPage = i;
+                    break;
+                }
+            }
+        }
 
         
         public Form1()
@@ -196,11 +211,7 @@ namespace EReader
 
         }
 
-        public async Task AddScript(string idRef)
-        {
-            await webView21.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("document.getElementById("+ idRef + ").scrollIntoView({behavior: 'smooth'});");
-        }
-
+       
         private void button1_Click(object sender, EventArgs e)
         {
             EpubBook book = OpenBook();
@@ -208,12 +219,15 @@ namespace EReader
             {
                 string extPath = ExtractionPath(book);
                 ExtractBook(book, extPath);
+                List<string> pageInfo = new List<string>();
+                pageInfo = GetPagePath(0);
+                string coverPage = pageInfo[0];
                 EpubTextContentFile contentFile = book.ReadingOrder[currentNavigationPage];
-                string coverPage = GetPagePath(0);
                 webView21.CoreWebView2.Navigate(coverPage);
                 button2.Visible = true;
                 button3.Visible = true;
                 button2.Enabled = false;
+                SetCurrentNavigationPage(book, pageInfo[1]);
                 NavigationTree(book.Navigation);
             }
             
@@ -222,17 +236,21 @@ namespace EReader
         private void button3_Click(object sender, EventArgs e)
         {
             string page = "";
+            List<string> pageInfo = new List<string>();
             currentNavigationPage++;
             if (currentNavigationPage <= book.ReadingOrder.Count-1)
             {
-                 page = GetPagePath(currentNavigationPage);
-
+                 pageInfo = GetPagePath(currentNavigationPage);
+                 page = pageInfo[0];
+                SetCurrentNavigationPage(book, pageInfo[1]);
                 webView21.CoreWebView2.Navigate(page);
-                //currentNavigationPage++;
+                label1.Text = book.ReadingOrder.Count.ToString();
+               
             }
             if (currentNavigationPage == book.ReadingOrder.Count-1)
             {
                 button3.Enabled = false;
+                treeView1.Enabled= false;
             }
             button2.Enabled=true;
             
@@ -244,9 +262,15 @@ namespace EReader
             string page = "";
             if (currentNavigationPage >= 0)
             {
-                page = GetPagePath(currentNavigationPage);
-
+                List<string> pageInfo = new List<string>();
+                pageInfo = GetPagePath(currentNavigationPage);  
+                page = pageInfo[0];
+                SetCurrentNavigationPage(book, pageInfo[1]);
                 webView21.CoreWebView2.Navigate(page);
+                if (button3.Enabled == false)
+                {
+                    button3.Enabled = true;
+                }
                 
             }
             if (currentNavigationPage == 0)
@@ -255,16 +279,12 @@ namespace EReader
             }
         }
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-
-            
-        }
-
-        private async void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             int parentSelection, childSelection;
             childSelection = -1;
+            currentId = null;
             if (e.Node.Parent == null)
             {
                 parentSelection = e.Node.Index;
@@ -276,16 +296,21 @@ namespace EReader
             }
             List<String> pageInfo = GetNavigationItemPath(book.Navigation, parentSelection, childSelection);
             webView21.CoreWebView2.Navigate(pageInfo[0]);
-            label1.Text = pageInfo[2];
-           
-            for (int i = 0; i < book.ReadingOrder.Count(); i++)
+            if (pageInfo[2] != null)
             {
-                if (book.ReadingOrder[i].FileName == pageInfo[1])
-                {
-                    await AddScript(pageInfo[2]);
-                    currentNavigationPage = i;
-                    break;
-                }
+                currentId = pageInfo[2];
+            }
+            
+            SetCurrentNavigationPage(book, pageInfo[1]);
+            label1.Text = "text";
+        }
+
+        private void webView21_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (currentId != null)
+            {
+                string scriptBody = "document.getElementById(\""+currentId+"\").scrollIntoView(true);";
+                webView21.CoreWebView2.ExecuteScriptAsync(scriptBody);
             }
         }
     }
