@@ -14,6 +14,8 @@ using System.IO;
 using System.IO.Compression;
 using VersOne.Epub.Environment;
 using Microsoft.Web.WebView2.Wpf;
+using System.Xml;
+
 
 namespace EReader
 {
@@ -22,6 +24,7 @@ namespace EReader
         private EpubBook book;
         private int currentNavigationPage = 0;
         private string currentId = null;
+        Dictionary<string, List<string>> books;
         private string GetFile()
         {
             string filePath = "";
@@ -104,6 +107,10 @@ namespace EReader
             navPath.Add(docPath);
             navPath.Add(contentFile.FileName);
             navPath.Add(idPath);
+            for (int i = 0; i <navigationItems.Count; i++)
+            {
+                Console.WriteLine(navigationItems[i].HtmlContentFile.FileName);
+            }
             return navPath;
         }
 
@@ -169,6 +176,209 @@ namespace EReader
             }
         }
 
+        private void WriteToLibrary()
+        {
+            if (book != null)
+            {
+                string libraryPath = "Library\\Library.xml";
+                int itemNum;
+                bool isInLib = false;
+                string nodeValue;
+                XmlDocument doc = new XmlDocument();
+                doc.Load(libraryPath);
+                XmlNodeList pathNodeList = doc.GetElementsByTagName("book");
+                foreach (XmlNode node in pathNodeList)
+                {
+                    XmlNode path = node.SelectSingleNode("filepath");
+                    if (path.InnerText == book.FilePath)
+                    {
+                        node.SelectSingleNode("htmldoc").InnerText = currentNavigationPage.ToString();
+                        node.SelectSingleNode("pageid").InnerText = currentId;
+                        isInLib = true;
+                        break;
+
+                    }
+                }
+
+                if (isInLib == false)
+                {
+                    XmlNodeList idNodeList = doc.GetElementsByTagName("bookid");
+                    string coverPath;
+                    if (idNodeList.Count != 0)
+                    {
+                        int numOfBooks = idNodeList.Count;
+                        nodeValue = idNodeList.Item(numOfBooks - 1).InnerText;
+                        itemNum = Convert.ToInt32(nodeValue) + 1;
+                    }
+                    else
+                    {
+                        itemNum = 1;
+                    }
+
+                    if (book.CoverImage != null)
+                    {
+                        coverPath = "Library\\Covers\\cover" + itemNum.ToString() + ".jpeg";
+                    }
+
+                    else
+                    {
+                        coverPath = "null";
+                    }
+
+                    XmlElement root = doc.DocumentElement;
+                    XmlElement subroot = doc.CreateElement("book");
+                    XmlElement bookid = doc.CreateElement("bookid");
+                    XmlElement bookPath = doc.CreateElement("filepath");
+                    XmlElement title = doc.CreateElement("title");
+                    XmlElement author = doc.CreateElement("author");
+                    XmlElement cover = doc.CreateElement("cover");
+                    XmlElement docNum = doc.CreateElement("htmldoc");
+                    XmlElement pageId = doc.CreateElement("pageid");
+                    bookid.InnerText = itemNum.ToString();
+                    bookPath.InnerText = book.FilePath;
+                    title.InnerText = book.Title;
+                    author.InnerText = book.Author;
+                    cover.InnerText = coverPath;
+                    docNum.InnerText = currentNavigationPage.ToString();
+                    if (currentId == null)
+                    {
+                        pageId.InnerText = "null";
+                    }
+                    else
+                    {
+                        pageId.InnerText = currentId;
+                    }
+                    subroot.AppendChild(bookid);
+                    subroot.AppendChild(bookPath);
+                    subroot.AppendChild(title);
+                    subroot.AppendChild(author);
+                    subroot.AppendChild(cover);
+                    subroot.AppendChild(docNum);
+                    subroot.AppendChild(pageId);
+                    root.AppendChild(subroot);
+                    doc.AppendChild(root);
+                    CoverLibrary(coverPath);
+                }
+
+                doc.Save(libraryPath);
+            }
+            
+        }
+
+        private void CoverLibrary(string coverPath)
+        {
+            if (book.CoverImage != null)
+            {
+                File.WriteAllBytes(coverPath, book.CoverImage);
+            }
+        }
+
+        private Dictionary<string, List<string>> ReadFromLibrary()
+        {
+            Dictionary<string, List<string>> bookList = new Dictionary<string, List<string>>();
+            string libraryPath = "Library\\Library.xml";
+            XmlDocument doc = new XmlDocument();
+            doc.Load(libraryPath);
+            XmlNodeList pathNodeList = doc.GetElementsByTagName("book");
+            foreach (XmlNode bookNode in pathNodeList)
+            {
+                string idNode = bookNode.SelectSingleNode("bookid").InnerText;
+                string fileNode = bookNode.SelectSingleNode("filepath").InnerText;
+                string titleNode = bookNode.SelectSingleNode("title").InnerText;
+                string authorNode = bookNode.SelectSingleNode("author").InnerText;
+                string coverNode = bookNode.SelectSingleNode("cover").InnerText;
+                string docNode = bookNode.SelectSingleNode("htmldoc").InnerText;
+                string pageidNode = bookNode.SelectSingleNode("pageid").InnerText;
+
+                List<string> bookInfo = new List<string> { idNode, fileNode, titleNode, authorNode, coverNode, docNode, pageidNode };
+               
+                bookList.Add(idNode, bookInfo);
+            }
+            return bookList;
+        }
+
+        private void LibraryClickEvent(object sender, EventArgs e)
+        {
+            PictureBox pictureBox = sender as PictureBox;
+            string keyName = pictureBox.Name;
+            List<string> libraryInfo = books[keyName];
+            string docPath = libraryInfo[1];
+            book = EpubReader.ReadBook(docPath);
+            if (book != null)
+            {  
+                CloseLibrary();
+                string extPath = ExtractionPath(book);
+                ExtractBook(book, extPath);
+                int htmlDoc = Convert.ToInt32(libraryInfo[5]);
+                List<string> pageInfo = GetPagePath(htmlDoc);
+                string startPage = pageInfo[0];
+                currentNavigationPage = htmlDoc;
+                currentId = libraryInfo[6];
+                
+                webView21.CoreWebView2.Navigate(startPage);
+                button2.Visible = true;
+                button3.Visible = true;
+                button2.Enabled = false;
+                webView21.Visible = true;
+                
+                NavigationTree(book.Navigation);
+                toolStripButton2.Enabled = true;
+                toolStripButton3.Enabled = true;
+                toolStripButton1.Enabled = false;
+                treeView1.Enabled = true;
+                treeView1.Visible = true;
+
+
+            }
+
+        }
+
+        private void LoadLibrary()
+        {
+            toolStripButton2.Enabled = false;
+            toolStripButton3.Enabled = false;
+            toolStripButton1.Enabled = true;
+            treeView1.Enabled = false;
+            treeView1.Visible = false;
+            
+            books = ReadFromLibrary();
+            PictureBox[] cover = new PictureBox[books.Count];
+            for (int i= 0; i < books.Count; i++)
+            {
+              
+                string bookKey = (i + 1).ToString();
+                List<string> bookInfo = books[bookKey];
+                string coverPath = "Library\\Covers\\cover"+ bookKey + ".jpeg";
+                string tipString = bookInfo[3] + " - " + bookInfo[2];  
+                cover[i] = new PictureBox();
+                cover[i].Name = bookKey;
+                cover[i].Size = new Size(140, 180);
+                cover[i].SizeMode = PictureBoxSizeMode.StretchImage;
+                cover[i].Image = Image.FromFile(coverPath);
+                cover[i].Parent = flowLayoutPanel1;
+                cover[i].Margin = new Padding(0, 0, 25, 25);
+                ToolTip tip = new ToolTip();
+                tip.SetToolTip(cover[i], tipString);
+                cover[i].Click += new EventHandler(LibraryClickEvent);
+            }
+        }
+
+        private void CloseBook()
+        {  
+            WriteToLibrary();
+            book = null;
+            books = null;
+            currentNavigationPage = 0;
+            currentId = null;
+        }
+
+        private void CloseLibrary()
+        {
+            flowLayoutPanel1.Controls.Clear();
+            flowLayoutPanel1.Visible = false;
+        }
+
+        
         
         public Form1()
         {
@@ -177,9 +387,11 @@ namespace EReader
         }
 
         private void Form_Resize(object sender, EventArgs e)
-        {
+        { 
+            
             webView21.Size = this.ClientSize - new Size(webView21.Location);
             webView21.Height -= 40;
+            flowLayoutPanel1.Size = this.ClientSize - new Size(flowLayoutPanel1.Location);
             button2.Top = this.ClientSize.Height - button2.Height - 10;
             button3.Top = this.ClientSize.Height - button2.Height - 10;
             button3.Left = this.ClientSize.Width - button3.Width - 20;
@@ -196,6 +408,8 @@ namespace EReader
             InitBrowser();
             button2.Visible = false;
             button3.Visible = false;
+            webView21.Visible = false;
+            LoadLibrary();
         }
 
         private async Task Initizated()
@@ -212,30 +426,12 @@ namespace EReader
         }
 
        
-        private void button1_Click(object sender, EventArgs e)
-        {
-            EpubBook book = OpenBook();
-            if (book != null)
-            {
-                string extPath = ExtractionPath(book);
-                ExtractBook(book, extPath);
-                List<string> pageInfo = new List<string>();
-                pageInfo = GetPagePath(0);
-                string coverPage = pageInfo[0];
-                EpubTextContentFile contentFile = book.ReadingOrder[currentNavigationPage];
-                webView21.CoreWebView2.Navigate(coverPage);
-                button2.Visible = true;
-                button3.Visible = true;
-                button2.Enabled = false;
-                SetCurrentNavigationPage(book, pageInfo[1]);
-                NavigationTree(book.Navigation);
-            }
-            
-        }
+       
 
         private void button3_Click(object sender, EventArgs e)
         {
             string page = "";
+            treeView1.Enabled = false;
             List<string> pageInfo = new List<string>();
             currentNavigationPage++;
             if (currentNavigationPage <= book.ReadingOrder.Count-1)
@@ -244,16 +440,15 @@ namespace EReader
                  page = pageInfo[0];
                 SetCurrentNavigationPage(book, pageInfo[1]);
                 webView21.CoreWebView2.Navigate(page);
-                label1.Text = book.ReadingOrder.Count.ToString();
+           
                
             }
             if (currentNavigationPage == book.ReadingOrder.Count-1)
             {
                 button3.Enabled = false;
-                treeView1.Enabled= false;
             }
             button2.Enabled=true;
-            
+            treeView1.Enabled = true;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -302,7 +497,12 @@ namespace EReader
             }
             
             SetCurrentNavigationPage(book, pageInfo[1]);
-            label1.Text = "text";
+            
+            if(currentNavigationPage <= book.ReadingOrder.Count)
+            {
+                button3.Enabled = true;
+            }
+            
         }
 
         private void webView21_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -311,6 +511,67 @@ namespace EReader
             {
                 string scriptBody = "document.getElementById(\""+currentId+"\").scrollIntoView(true);";
                 webView21.CoreWebView2.ExecuteScriptAsync(scriptBody);
+            }
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            EpubBook book = OpenBook();
+            if (book != null)
+            {
+                string extPath = ExtractionPath(book);
+                ExtractBook(book, extPath);
+                List<string> pageInfo = new List<string>();
+                pageInfo = GetPagePath(0);
+                string coverPage = pageInfo[0];
+                webView21.CoreWebView2.Navigate(coverPage);
+                button2.Visible = true;
+                button3.Visible = true;
+                button2.Enabled = false;
+                NavigationTree(book.Navigation);
+                toolStripButton1.Enabled = false;
+                toolStripButton2.Enabled = true;
+                toolStripButton3.Enabled = true;
+                webView21.Visible = true;
+                treeView1.Enabled = true;
+                treeView1.Visible = true;
+                flowLayoutPanel1.Visible = false;
+                CloseLibrary();
+              
+
+            }
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            CloseBook();
+            LoadLibrary();
+            webView21.Visible = false;
+            flowLayoutPanel1.Visible = true;
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            string bookDescribe;
+            if (book.Description != null)
+            {
+                bookDescribe = book.Description;    
+            }
+            else
+            {
+                bookDescribe = "Autorius: " + book.Author + "\nPavadinimas: " + book.Title;
+            }
+            MessageBox.Show(bookDescribe, "Apie knygą");
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            WriteToLibrary();
+            string workDir = Directory.GetCurrentDirectory();
+            string des_path = @workDir + "\\temp";
+            if (Directory.Exists(des_path))
+            {
+                Directory.Delete(des_path, true);
             }
         }
     }
