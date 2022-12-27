@@ -107,15 +107,13 @@ namespace EReader
             navPath.Add(docPath);
             navPath.Add(contentFile.FileName);
             navPath.Add(idPath);
-            for (int i = 0; i <navigationItems.Count; i++)
-            {
-                Console.WriteLine(navigationItems[i].HtmlContentFile.FileName);
-            }
+            Console.WriteLine(webView21.Source.ToString());
             return navPath;
         }
 
         private List<string> GetPagePath(int numInList)
         {
+            
             EpubTextContentFile contentFile = book.ReadingOrder[numInList];
             List<string> navPath = new List<string>();
             string docPath = ExtractionPath(book) + "\\" + contentFile.FilePathInEpubArchive;
@@ -124,27 +122,7 @@ namespace EReader
             return navPath;
         }
 
-        private List<EpubNavigationItem> GetPlainNavigation(List<EpubNavigationItem> bookItems)
-        {
-            List<EpubNavigationItem> navigationItems = new List<EpubNavigationItem>();
-            foreach (EpubNavigationItem item in bookItems)
-            {
-                if (item.NestedItems == null)
-                {
-                    navigationItems.Add(item);
-                }
-                else
-                {
-                    foreach (EpubNavigationItem nestedItem in item.NestedItems)
-                    {
-                        navigationItems.Add(nestedItem);
-                    }
-                }
-                
-
-            }
-            return navigationItems;
-        }
+        
 
         private void NavigationTree(List<EpubNavigationItem> navigationItems)
         {
@@ -318,7 +296,18 @@ namespace EReader
                 webView21.CoreWebView2.Navigate(startPage);
                 button2.Visible = true;
                 button3.Visible = true;
-                button2.Enabled = false;
+                if (htmlDoc > 0)
+                {
+                    button2.Enabled = true;
+                }
+                else if (htmlDoc == 0)
+                {
+                    button2.Enabled = false;
+                }
+                if (htmlDoc == book.ReadingOrder.Count - 1)
+                {
+                    button3.Enabled = false;
+                }
                 webView21.Visible = true;
                 
                 NavigationTree(book.Navigation);
@@ -370,6 +359,7 @@ namespace EReader
             books = null;
             currentNavigationPage = 0;
             currentId = null;
+            treeView1.Nodes.Clear();
         }
 
         private void CloseLibrary()
@@ -501,6 +491,10 @@ namespace EReader
             if(currentNavigationPage <= book.ReadingOrder.Count)
             {
                 button3.Enabled = true;
+            }
+            if (currentNavigationPage > 0)
+            {
+                button2.Enabled=true;
             }
             
         }
