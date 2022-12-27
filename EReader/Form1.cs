@@ -15,6 +15,7 @@ using System.IO.Compression;
 using VersOne.Epub.Environment;
 using Microsoft.Web.WebView2.Wpf;
 using System.Xml;
+using System.Reflection;
 
 
 namespace EReader
@@ -56,7 +57,7 @@ namespace EReader
             }
             catch(AggregateException) 
             {
-                MessageBox.Show("Negalima atverti knygos. Netinkama Epub versija");
+                MessageBox.Show("Negalima atverti knygos");
          
             }
             return book;
@@ -143,7 +144,9 @@ namespace EReader
 
         private void SetCurrentNavigationPage(EpubBook book, string fileName)
         {
-            
+            int index = fileName.LastIndexOf("/");
+            string htmlName = fileName.Substring(index+1);
+            Console.WriteLine(htmlName);
             for (int i = 0; i < book.ReadingOrder.Count; i++)
             {
                 if (book.ReadingOrder[i].FileName == fileName)
@@ -332,7 +335,7 @@ namespace EReader
             
             books = ReadFromLibrary();
             PictureBox[] cover = new PictureBox[books.Count];
-            for (int i= 0; i < books.Count; i++)
+            for (int i= books.Count-1; i >=0; i--)
             {
               
                 string bookKey = (i + 1).ToString();
