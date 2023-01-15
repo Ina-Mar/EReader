@@ -95,9 +95,9 @@
             // 
             // treeView1
             // 
-            this.treeView1.BackColor = System.Drawing.SystemColors.Control;
+            this.treeView1.BackColor = System.Drawing.Color.Linen;
             this.treeView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.treeView1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.treeView1.Font = new System.Drawing.Font("Tahoma", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.treeView1.Location = new System.Drawing.Point(12, 105);
             this.treeView1.Name = "treeView1";
             this.treeView1.Size = new System.Drawing.Size(252, 426);
@@ -116,16 +116,17 @@
             this.toolStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
             this.toolStrip1.Location = new System.Drawing.Point(9, 9);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(152, 55);
+            this.toolStrip1.Size = new System.Drawing.Size(198, 55);
             this.toolStrip1.TabIndex = 7;
             this.toolStrip1.Text = "toolStrip1";
             // 
             // toolStripButton1
             // 
             this.toolStripButton1.AutoSize = false;
+            this.toolStripButton1.BackColor = System.Drawing.Color.LightBlue;
             this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.BlueViolet;
             this.toolStripButton1.Name = "toolStripButton1";
             this.toolStripButton1.Size = new System.Drawing.Size(50, 50);
             this.toolStripButton1.Text = "toolStripButton1";
@@ -135,6 +136,7 @@
             // toolStripButton2
             // 
             this.toolStripButton2.AutoSize = false;
+            this.toolStripButton2.BackColor = System.Drawing.Color.PaleTurquoise;
             this.toolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
             this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -147,6 +149,7 @@
             // toolStripButton3
             // 
             this.toolStripButton3.AutoSize = false;
+            this.toolStripButton3.BackColor = System.Drawing.Color.PowderBlue;
             this.toolStripButton3.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
             this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -168,6 +171,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.OldLace;
             this.ClientSize = new System.Drawing.Size(1095, 619);
             this.Controls.Add(this.treeView1);
             this.Controls.Add(this.flowLayoutPanel1);
@@ -177,7 +181,7 @@
             this.Controls.Add(this.webView22);
             this.Controls.Add(this.webView21);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "EReader";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.webView21)).EndInit();

@@ -108,7 +108,7 @@ namespace EReader
             navPath.Add(docPath);
             navPath.Add(contentFile.FileName);
             navPath.Add(idPath);
-            Console.WriteLine(webView21.Source.ToString());
+            //Console.WriteLine(webView21.Source.ToString());
             return navPath;
         }
 
@@ -140,16 +140,14 @@ namespace EReader
                 }
                 numInList++;
             }
+           
         }
 
         private void SetCurrentNavigationPage(EpubBook book, string fileName)
         {
-            int index = fileName.LastIndexOf("/");
-            string htmlName = fileName.Substring(index+1);
-            Console.WriteLine(htmlName);
             for (int i = 0; i < book.ReadingOrder.Count; i++)
             {
-                if (book.ReadingOrder[i].FileName == fileName)
+                if (book.ReadingOrder[i].FileName == fileName || book.ReadingOrder[i].FileName.Contains(fileName))
                 {
                     currentNavigationPage = i;
                     break;
@@ -325,6 +323,18 @@ namespace EReader
 
         }
 
+        private void LibraryMouseMoveEvent(object sender, EventArgs e)
+        {
+            PictureBox pictureBox = sender as PictureBox;
+            pictureBox.BorderStyle = BorderStyle.FixedSingle;
+        }
+
+        private void LibraryMouseLeaveEvent(object sender, EventArgs e)
+        {
+            PictureBox pictureBox = sender as PictureBox;
+            pictureBox.BorderStyle = BorderStyle.None;
+        }
+
         private void LoadLibrary()
         {
             toolStripButton2.Enabled = false;
@@ -352,6 +362,8 @@ namespace EReader
                 ToolTip tip = new ToolTip();
                 tip.SetToolTip(cover[i], tipString);
                 cover[i].Click += new EventHandler(LibraryClickEvent);
+                cover[i].MouseMove += new MouseEventHandler(LibraryMouseMoveEvent);
+                cover[i].MouseLeave += new EventHandler(LibraryMouseLeaveEvent);
             }
         }
 
@@ -402,6 +414,20 @@ namespace EReader
             button2.Visible = false;
             button3.Visible = false;
             webView21.Visible = false;
+            string libDirectory = @workDir + "\\Library";
+            if (!Directory.Exists(libDirectory))
+            {
+                //Directory.CreateDirectory(libDirectory);
+                Directory.CreateDirectory(libDirectory+"\\Covers");
+                using (XmlWriter writer = XmlWriter.Create(libDirectory + "\\Library.xml"))
+                {
+                    writer.WriteStartElement("library");
+                    writer.WriteEndElement();
+                    writer.Flush();
+                }
+
+
+            }
             LoadLibrary();
         }
 
@@ -431,9 +457,9 @@ namespace EReader
             {
                  pageInfo = GetPagePath(currentNavigationPage);
                  page = pageInfo[0];
-                SetCurrentNavigationPage(book, pageInfo[1]);
+                 //Console.WriteLine(page);
                 webView21.CoreWebView2.Navigate(page);
-           
+                webView21.CoreWebView2.OpenDevToolsWindow();
                
             }
             if (currentNavigationPage == book.ReadingOrder.Count-1)
@@ -453,7 +479,7 @@ namespace EReader
                 List<string> pageInfo = new List<string>();
                 pageInfo = GetPagePath(currentNavigationPage);  
                 page = pageInfo[0];
-                SetCurrentNavigationPage(book, pageInfo[1]);
+                //SetCurrentNavigationPage(book, pageInfo[1]);
                 webView21.CoreWebView2.Navigate(page);
                 if (button3.Enabled == false)
                 {
@@ -489,7 +515,7 @@ namespace EReader
                 currentId = pageInfo[2];
             }
             
-            SetCurrentNavigationPage(book, pageInfo[1]);
+            //SetCurrentNavigationPage(book, pageInfo[1]);
             
             if(currentNavigationPage <= book.ReadingOrder.Count)
             {
@@ -504,11 +530,22 @@ namespace EReader
 
         private void webView21_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            string fileName = webView21.CoreWebView2.Source;
+            int index = fileName.LastIndexOf("/");
+            string htmlName = fileName.Substring(index + 1);
+            if (htmlName.Contains("#"))
+            {
+                int endIndex = htmlName.LastIndexOf("#");
+                htmlName = htmlName.Substring(0, endIndex);
+            }
+            SetCurrentNavigationPage(book, htmlName);
             if (currentId != null)
             {
                 string scriptBody = "document.getElementById(\""+currentId+"\").scrollIntoView(true);";
                 webView21.CoreWebView2.ExecuteScriptAsync(scriptBody);
+                
             }
+            //webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 500);");
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)
@@ -565,6 +602,7 @@ namespace EReader
         {
             WriteToLibrary();
             string workDir = Directory.GetCurrentDirectory();
+           
             string des_path = @workDir + "\\temp";
             if (Directory.Exists(des_path))
             {
