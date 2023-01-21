@@ -16,6 +16,7 @@ using VersOne.Epub.Environment;
 using Microsoft.Web.WebView2.Wpf;
 using System.Xml;
 using System.Reflection;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 
 namespace EReader
@@ -26,6 +27,7 @@ namespace EReader
         private int currentNavigationPage = 0;
         private string currentId = null;
         Dictionary<string, List<string>> books;
+        bool inLib = false;
         private string GetFile()
         {
             string filePath = "";
@@ -293,7 +295,7 @@ namespace EReader
                 string startPage = pageInfo[0];
                 currentNavigationPage = htmlDoc;
                 currentId = libraryInfo[6];
-                
+                inLib = true;
                 webView21.CoreWebView2.Navigate(startPage);
                 button2.Visible = true;
                 button3.Visible = true;
@@ -358,8 +360,8 @@ namespace EReader
                 cover[i].SizeMode = PictureBoxSizeMode.StretchImage;
                 cover[i].Image = Image.FromFile(coverPath);
                 cover[i].Parent = flowLayoutPanel1;
-                cover[i].Margin = new Padding(0, 0, 25, 25);
-                ToolTip tip = new ToolTip();
+                cover[i].Margin = new Padding(0, 0, 30, 30);
+                System.Windows.Forms.ToolTip tip = new System.Windows.Forms.ToolTip();
                 tip.SetToolTip(cover[i], tipString);
                 cover[i].Click += new EventHandler(LibraryClickEvent);
                 cover[i].MouseMove += new MouseEventHandler(LibraryMouseMoveEvent);
@@ -370,11 +372,28 @@ namespace EReader
         private void CloseBook()
         {  
             WriteToLibrary();
+            inLib = false;
+            //string scriptPath = "C:\\Users\\SilverWitch\\source\\repos\\EReader\\Script1.js";
+            //string scriptText = System.IO.File.ReadAllText(scriptPath);
+            string scriptText = @"var path = window.location.pathname;
+            const myArray = path.split('/');
+            let st = '';
+            for (var i = 0; i < myArray.length; i++)
+            {
+                st += myArray[i];
+
+            }
+            var lastKnownScrollPosition = window.scrollY;
+            window.localStorage.setItem(st, lastKnownScrollPosition);
+            ";
+            webView21.CoreWebView2.ExecuteScriptAsync(scriptText);
             book = null;
             books = null;
             currentNavigationPage = 0;
             currentId = null;
             treeView1.Nodes.Clear();
+            button2.Visible = false;
+            button3.Visible = false;
         }
 
         private void CloseLibrary()
@@ -459,7 +478,6 @@ namespace EReader
                  page = pageInfo[0];
                  //Console.WriteLine(page);
                 webView21.CoreWebView2.Navigate(page);
-                webView21.CoreWebView2.OpenDevToolsWindow();
                
             }
             if (currentNavigationPage == book.ReadingOrder.Count-1)
@@ -545,6 +563,13 @@ namespace EReader
                 webView21.CoreWebView2.ExecuteScriptAsync(scriptBody);
                 
             }
+            if (inLib == true)
+            {
+                string positionKey = fileName.Replace("file", "").Replace("/", "").Substring(1);
+                webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, localStorage.getItem(\""+positionKey+"\"));");
+                inLib = false;
+                Console.WriteLine(positionKey.Substring(1));
+            }
             //webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 500);");
         }
 
@@ -600,7 +625,10 @@ namespace EReader
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            WriteToLibrary();
+            if (book != null)
+            {
+                CloseBook();
+            }
             string workDir = Directory.GetCurrentDirectory();
            
             string des_path = @workDir + "\\temp";

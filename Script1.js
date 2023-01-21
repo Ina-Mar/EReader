@@ -6,6 +6,6 @@ for (var i = 0; i < myArray.length; i++) {
 	st += myArray[i];
 
 }
-lastKnownScrollPosition = window.scrollY;
-localStorage.setItem(st, lastKnownScrollPosition);
+var lastKnownScrollPosition = window.scrollY;
+window.localStorage.setItem(st, lastKnownScrollPosition);
 
