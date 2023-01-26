@@ -74,8 +74,11 @@ namespace EReader
                 int index = filePath.LastIndexOf("\\");
                 int nameLength = filePath.Length - index - 5;
                 string tempDirectory = filePath.Substring(index + 1, nameLength);
-                string workDir = Directory.GetCurrentDirectory();
-                desPath = @workDir + "\\temp\\" + tempDirectory;
+                //------
+                string workDir = Path.GetTempPath();
+                //string des_path = tempPath + "\\EpReader";
+                //string workDir = Directory.GetCurrentDirectory();
+                desPath = @workDir + "\\EpReader\\" + tempDirectory;
             }
             return desPath;
         }
@@ -161,7 +164,11 @@ namespace EReader
         {
             if (book != null)
             {
-                string libraryPath = "Library\\Library.xml";
+                //-----------
+                string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string libraryPath = Path.Combine(appPath, "EpReader\\Library\\Library.xml");
+                //------------
+                //string libraryPath = "Library\\Library.xml";
                 int itemNum;
                 bool isInLib = false;
                 string nodeValue;
@@ -198,7 +205,11 @@ namespace EReader
 
                     if (book.CoverImage != null)
                     {
-                        coverPath = "Library\\Covers\\cover" + itemNum.ToString() + ".jpeg";
+                        //--------
+                        
+                        coverPath = Path.Combine(appPath, "EpReader\\Library\\Covers\\cover" + itemNum.ToString() + ".jpeg");
+                        //--------
+                        //coverPath = "Library\\Covers\\cover" + itemNum.ToString() + ".jpeg";
                     }
 
                     else
@@ -257,7 +268,11 @@ namespace EReader
         private Dictionary<string, List<string>> ReadFromLibrary()
         {
             Dictionary<string, List<string>> bookList = new Dictionary<string, List<string>>();
-            string libraryPath = "Library\\Library.xml";
+            //--------
+            string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string libraryPath = Path.Combine(appPath, "EpReader\\Library\\Library.xml");
+            //--------
+            //string libraryPath = "Library\\Library.xml";
             XmlDocument doc = new XmlDocument();
             doc.Load(libraryPath);
             XmlNodeList pathNodeList = doc.GetElementsByTagName("book");
@@ -352,7 +367,10 @@ namespace EReader
               
                 string bookKey = (i + 1).ToString();
                 List<string> bookInfo = books[bookKey];
-                string coverPath = "Library\\Covers\\cover"+ bookKey + ".jpeg";
+                //------
+                string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string coverPath = Path.Combine(appPath, "EpReader\\Library\\Covers\\cover" + bookKey + ".jpeg");
+                //string coverPath = "Library\\Covers\\cover"+ bookKey + ".jpeg";
                 string tipString = bookInfo[3] + " - " + bookInfo[2];  
                 cover[i] = new PictureBox();
                 cover[i].Name = bookKey;
@@ -423,8 +441,13 @@ namespace EReader
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            string workDir = Directory.GetCurrentDirectory();
-            string des_path = @workDir + "\\temp";
+            //------
+            //string workDir = Directory.GetCurrentDirectory();
+            string workDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string libraryPath = Path.Combine(workDir, "EpReader");
+            string tempPath = Path.GetTempPath();
+            string des_path = tempPath + "\\EpReader";
+            //-----
             if (!Directory.Exists(des_path))
             {
                 Directory.CreateDirectory(des_path);
@@ -433,7 +456,7 @@ namespace EReader
             button2.Visible = false;
             button3.Visible = false;
             webView21.Visible = false;
-            string libDirectory = @workDir + "\\Library";
+            string libDirectory = @workDir + "\\EpReader\\Library";
             if (!Directory.Exists(libDirectory))
             {
                 //Directory.CreateDirectory(libDirectory);
@@ -452,7 +475,12 @@ namespace EReader
 
         private async Task Initizated()
         {
-            await webView21.EnsureCoreWebView2Async(null);        
+            string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EpReader";
+            var env = await CoreWebView2Environment.CreateAsync(null, appPath);
+            //-------
+            await webView21.EnsureCoreWebView2Async(env);
+            //-------
+            //await webView21.EnsureCoreWebView2Async(null);        
         }
 
         public async void InitBrowser()
@@ -568,7 +596,6 @@ namespace EReader
                 string positionKey = fileName.Replace("file", "").Replace("/", "").Substring(1);
                 webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, localStorage.getItem(\""+positionKey+"\"));");
                 inLib = false;
-                Console.WriteLine(positionKey.Substring(1));
             }
             //webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 500);");
         }
@@ -594,7 +621,7 @@ namespace EReader
                 webView21.Visible = true;
                 treeView1.Enabled = true;
                 treeView1.Visible = true;
-                flowLayoutPanel1.Visible = false;
+                //flowLayoutPanel1.Visible = false;
                 CloseLibrary();
               
 
@@ -629,9 +656,11 @@ namespace EReader
             {
                 CloseBook();
             }
-            string workDir = Directory.GetCurrentDirectory();
-           
-            string des_path = @workDir + "\\temp";
+            //string workDir = Directory.GetCurrentDirectory();
+
+            //string des_path = @workDir + "\\temp";
+            string tempPath = Path.GetTempPath();
+            string des_path = tempPath + "\\EpReader";
             if (Directory.Exists(des_path))
             {
                 Directory.Delete(des_path, true);

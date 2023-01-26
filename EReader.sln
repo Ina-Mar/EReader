@@ -9,14 +9,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		All|Any CPU = All|Any CPU
+		All|x86 = All|x86
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.All|Any CPU.ActiveCfg = Release|Any CPU
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.All|Any CPU.Build.0 = Release|Any CPU
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.All|x86.ActiveCfg = Debug|x86
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.All|x86.Build.0 = Debug|x86
 		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Debug|x86.ActiveCfg = Debug|x86
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Debug|x86.Build.0 = Debug|x86
 		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Release|x86.ActiveCfg = Release|x86
+		{C9AE7003-E02B-4A17-964A-58D1AE9F7643}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
