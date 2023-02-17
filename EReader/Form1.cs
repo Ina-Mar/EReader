@@ -17,6 +17,7 @@ using Microsoft.Web.WebView2.Wpf;
 using System.Xml;
 using System.Reflection;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Xml.Linq;
 
 
 namespace EReader
@@ -74,10 +75,7 @@ namespace EReader
                 int index = filePath.LastIndexOf("\\");
                 int nameLength = filePath.Length - index - 5;
                 string tempDirectory = filePath.Substring(index + 1, nameLength);
-                //------
                 string workDir = Path.GetTempPath();
-                //string des_path = tempPath + "\\EpReader";
-                //string workDir = Directory.GetCurrentDirectory();
                 desPath = @workDir + "\\EpReader\\" + tempDirectory;
             }
             return desPath;
@@ -113,7 +111,6 @@ namespace EReader
             navPath.Add(docPath);
             navPath.Add(contentFile.FileName);
             navPath.Add(idPath);
-            //Console.WriteLine(webView21.Source.ToString());
             return navPath;
         }
 
@@ -164,11 +161,8 @@ namespace EReader
         {
             if (book != null)
             {
-                //-----------
                 string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string libraryPath = Path.Combine(appPath, "EpReader\\Library\\Library.xml");
-                //------------
-                //string libraryPath = "Library\\Library.xml";
                 int itemNum;
                 bool isInLib = false;
                 string nodeValue;
@@ -205,11 +199,8 @@ namespace EReader
 
                     if (book.CoverImage != null)
                     {
-                        //--------
                         
                         coverPath = Path.Combine(appPath, "EpReader\\Library\\Covers\\cover" + itemNum.ToString() + ".jpeg");
-                        //--------
-                        //coverPath = "Library\\Covers\\cover" + itemNum.ToString() + ".jpeg";
                     }
 
                     else
@@ -268,11 +259,8 @@ namespace EReader
         private Dictionary<string, List<string>> ReadFromLibrary()
         {
             Dictionary<string, List<string>> bookList = new Dictionary<string, List<string>>();
-            //--------
             string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string libraryPath = Path.Combine(appPath, "EpReader\\Library\\Library.xml");
-            //--------
-            //string libraryPath = "Library\\Library.xml";
             XmlDocument doc = new XmlDocument();
             doc.Load(libraryPath);
             XmlNodeList pathNodeList = doc.GetElementsByTagName("book");
@@ -326,6 +314,11 @@ namespace EReader
                 {
                     button3.Enabled = false;
                 }
+                if (htmlDoc < book.ReadingOrder.Count - 1)
+                {
+                    button3.Enabled = true;
+                }
+
                 webView21.Visible = true;
                 
                 NavigationTree(book.Navigation);
@@ -367,11 +360,10 @@ namespace EReader
               
                 string bookKey = (i + 1).ToString();
                 List<string> bookInfo = books[bookKey];
-                //------
                 string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string coverPath = Path.Combine(appPath, "EpReader\\Library\\Covers\\cover" + bookKey + ".jpeg");
-                //string coverPath = "Library\\Covers\\cover"+ bookKey + ".jpeg";
                 string tipString = bookInfo[3] + " - " + bookInfo[2];  
+                
                 cover[i] = new PictureBox();
                 cover[i].Name = bookKey;
                 cover[i].Size = new Size(140, 180);
@@ -391,8 +383,6 @@ namespace EReader
         {  
             WriteToLibrary();
             inLib = false;
-            //string scriptPath = "C:\\Users\\SilverWitch\\source\\repos\\EReader\\Script1.js";
-            //string scriptText = System.IO.File.ReadAllText(scriptPath);
             string scriptText = @"var path = window.location.pathname;
             const myArray = path.split('/');
             let st = '';
@@ -441,13 +431,11 @@ namespace EReader
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            //------
-            //string workDir = Directory.GetCurrentDirectory();
             string workDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string libraryPath = Path.Combine(workDir, "EpReader");
             string tempPath = Path.GetTempPath();
             string des_path = tempPath + "\\EpReader";
-            //-----
+        
             if (!Directory.Exists(des_path))
             {
                 Directory.CreateDirectory(des_path);
@@ -459,7 +447,6 @@ namespace EReader
             string libDirectory = @workDir + "\\EpReader\\Library";
             if (!Directory.Exists(libDirectory))
             {
-                //Directory.CreateDirectory(libDirectory);
                 Directory.CreateDirectory(libDirectory+"\\Covers");
                 using (XmlWriter writer = XmlWriter.Create(libDirectory + "\\Library.xml"))
                 {
@@ -477,10 +464,8 @@ namespace EReader
         {
             string appPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EpReader";
             var env = await CoreWebView2Environment.CreateAsync(null, appPath);
-            //-------
-            await webView21.EnsureCoreWebView2Async(env);
-            //-------
-            //await webView21.EnsureCoreWebView2Async(null);        
+            await webView21.EnsureCoreWebView2Async(env); 
+           
         }
 
         public async void InitBrowser()
@@ -504,8 +489,7 @@ namespace EReader
             {
                  pageInfo = GetPagePath(currentNavigationPage);
                  page = pageInfo[0];
-                 //Console.WriteLine(page);
-                webView21.CoreWebView2.Navigate(page);
+                 webView21.CoreWebView2.Navigate(page);
                
             }
             if (currentNavigationPage == book.ReadingOrder.Count-1)
@@ -525,7 +509,6 @@ namespace EReader
                 List<string> pageInfo = new List<string>();
                 pageInfo = GetPagePath(currentNavigationPage);  
                 page = pageInfo[0];
-                //SetCurrentNavigationPage(book, pageInfo[1]);
                 webView21.CoreWebView2.Navigate(page);
                 if (button3.Enabled == false)
                 {
@@ -561,7 +544,6 @@ namespace EReader
                 currentId = pageInfo[2];
             }
             
-            //SetCurrentNavigationPage(book, pageInfo[1]);
             
             if(currentNavigationPage <= book.ReadingOrder.Count)
             {
@@ -576,6 +558,8 @@ namespace EReader
 
         private void webView21_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            string setFont = "document.getElementsByTagName(\"body\")[0].style.fontFamily = \"Verdana, sans-serif\";";
+            webView21.CoreWebView2.ExecuteScriptAsync(setFont);
             string fileName = webView21.CoreWebView2.Source;
             int index = fileName.LastIndexOf("/");
             string htmlName = fileName.Substring(index + 1);
@@ -597,7 +581,8 @@ namespace EReader
                 webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, localStorage.getItem(\""+positionKey+"\"));");
                 inLib = false;
             }
-            //webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, 500);");
+           
+
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)
@@ -621,7 +606,6 @@ namespace EReader
                 webView21.Visible = true;
                 treeView1.Enabled = true;
                 treeView1.Visible = true;
-                //flowLayoutPanel1.Visible = false;
                 CloseLibrary();
               
 
@@ -656,9 +640,6 @@ namespace EReader
             {
                 CloseBook();
             }
-            //string workDir = Directory.GetCurrentDirectory();
-
-            //string des_path = @workDir + "\\temp";
             string tempPath = Path.GetTempPath();
             string des_path = tempPath + "\\EpReader";
             if (Directory.Exists(des_path))
